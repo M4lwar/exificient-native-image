@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<header xmlns="http://www.w3.org/2009/exi">
+  <lesscommon>
+    <uncommon>
+      <alignment>
+        <byte/>
+      </alignment>
+      <valueMaxLength>1024</valueMaxLength>
+    </uncommon>
+    <preserve>
+      <prefixes/>
+      <comments/>
+    </preserve>
+  </lesscommon>
+</header>
