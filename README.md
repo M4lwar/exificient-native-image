@@ -83,6 +83,51 @@ graal_tear_down_isolate(thread);
 
 `exi_encode` and `exi_decode` return `NULL` and write `-1` to `outputLen` on failure.
 
-## Runtime Requirement
+## Runtime Requirement: schemas
 
-The shared library loads the XSD schema from `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to the working directory at the time `exi_init` is called. The `schemas/` directory must be present wherever the library is deployed.
+`exi_init` loads an XSD schema from the filesystem at the time it is called. By
+default it reads `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to the
+**current working directory**, so a `schemas/` directory must be present wherever
+the library runs.
+
+### Using a custom schema
+
+Set the `EXIFICIENT_SCHEMA` environment variable (before `exi_init`) to the path
+of your own `.xsd` to encode/decode against a different schema — no rebuild
+required:
+
+```sh
+export EXIFICIENT_SCHEMA=/etc/myapp/MySchema.xsd
+./your_app
+```
+
+If the variable is unset or empty, the default path above is used. The schema
+informs the EXI grammar on both ends, so the encoder and decoder must use the
+same schema.
+
+## Consuming via Conan
+
+CI publishes a prebuilt Conan 2 package (library + headers; **schemas are not
+packaged** — supply your own per the section above). Download the
+`conan-exificient-linux-<arch>` artifact from a `build` workflow run, then:
+
+```sh
+# 1. Restore the CI-built package into your local Conan cache
+conan cache restore conan-exificient-<arch>.tgz
+
+# 2. Require it from your conanfile
+#    [requires]
+#    exificient/<version>
+#
+#    [generators]
+#    CMakeDeps
+#    CMakeToolchain
+
+# 3. In CMakeLists.txt
+#    find_package(exificient CONFIG REQUIRED)
+#    target_link_libraries(your_app PRIVATE exificient::exificient)
+```
+
+The package is keyed on `os`+`arch` only (C ABI), so one binary works across
+compilers. A complete worked example lives on the `demo/entity-exi-compression`
+branch (`examples/entity_demo`).
