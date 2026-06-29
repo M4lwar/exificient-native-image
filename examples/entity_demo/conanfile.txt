@@ -1,0 +1,7 @@
+[requires]
+exificient/0.0.0-ci
+
+[generators]
+CMakeDeps
+CMakeToolchain
+VirtualRunEnv
