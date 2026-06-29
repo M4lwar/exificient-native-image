@@ -27,8 +27,11 @@ jobs:
       - name: Build libexificient.so
         run: docker build -f Dockerfile.build -o "out/${{ matrix.arch }}" .
 
-      - name: Stage schemas alongside the artifact
-        run: cp -r schemas "out/${{ matrix.arch }}/schemas"
+      - name: Stage schemas and license notices alongside the artifact
+        run: |
+          cp -r schemas "out/${{ matrix.arch }}/schemas"
+          # The .so embeds MIT-licensed EXIficient; ship the notices with it.
+          cp THIRD_PARTY_NOTICES.txt LICENSE "out/${{ matrix.arch }}/"
 
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
