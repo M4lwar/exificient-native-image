@@ -36,15 +36,17 @@ conan cache restore conan-exificient-<arch>.tgz
 
 ## 3. Build the demo against it
 
+The build is driven by `conanfile.py` (a CMake consumer recipe) plus
+`CMakeLists.txt`. Conan generates the toolchain and runs CMake for you:
+
 ```sh
-conan install . --output-folder=build --build=missing
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$PWD/build/conan_toolchain.cmake" -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+conan install . --build=missing
+conan build .
 ```
 
 `CMakeLists.txt` resolves the library with `find_package(exificient)` and links
 `exificient::exificient`; Conan generated the package config from the recipe's
-`cpp_info`.
+`cpp_info`. The binary is written to `build/Release/entity_demo`.
 
 ## 4. Provide schemas and run
 
@@ -54,9 +56,9 @@ you supply (and can swap for your own XSD). Copy the schemas shipped in this rep
 (or your own) next to where you run:
 
 ```sh
-cp -r ../../schemas ./schemas
-source build/conanrun.sh          # puts the package's lib dir on LD_LIBRARY_PATH
-./build/entity_demo EntityReport.xml
+cp -r ../../schemas ./schemas                       # or your own XSD
+source build/Release/generators/conanrun.sh         # puts the package's lib dir on LD_LIBRARY_PATH
+./build/Release/entity_demo EntityReport.xml
 ```
 
 Pass a different XML path as the first argument to compress your own message

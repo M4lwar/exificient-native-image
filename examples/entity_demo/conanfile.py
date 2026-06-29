@@ -1,0 +1,27 @@
+from conan import ConanFile
+from conan.tools.cmake import CMake, cmake_layout
+
+
+class EntityDemoConan(ConanFile):
+    """Consumer recipe for the entity_demo example.
+
+    Builds the demo with CMake against the prebuilt `exificient` Conan package.
+    Restore that package into your local cache first (see README), then:
+
+        conan install . --build=missing
+        conan build .
+    """
+
+    settings = "os", "arch", "compiler", "build_type"
+    generators = "CMakeToolchain", "CMakeDeps", "VirtualRunEnv"
+
+    def requirements(self):
+        self.requires("exificient/0.0.0-ci")
+
+    def layout(self):
+        cmake_layout(self)
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
