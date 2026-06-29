@@ -13,8 +13,13 @@ class ExificientConan(ConanFile):
     )
     homepage = "https://github.com/nolekev1214/exificient-native-image"
     topics = ("exi", "xml", "codec", "graalvm", "native-image")
+    license = "MIT"
     settings = "os", "arch"
     package_type = "shared-library"
+
+    # The .so embeds the MIT-licensed EXIficient codec, so its notice must ship
+    # with the package (THIRD_PARTY_NOTICES.txt). LICENSE is this wrapper's own.
+    exports = "THIRD_PARTY_NOTICES.txt", "LICENSE"
 
     # This recipe packages a PREBUILT binary -- it never compiles from source, so
     # consumers never need a JDK or GraalVM. CI points EXIFICIENT_PREBUILT_DIR at
@@ -41,6 +46,10 @@ class ExificientConan(ConanFile):
         # version and bloat it.
         copy(self, "*.so", prebuilt, os.path.join(self.package_folder, "lib"))
         copy(self, "*.h", prebuilt, os.path.join(self.package_folder, "include"))
+        # Ship license notices: the .so embeds MIT-licensed EXIficient.
+        licenses = os.path.join(self.package_folder, "licenses")
+        copy(self, "THIRD_PARTY_NOTICES.txt", self.recipe_folder, licenses)
+        copy(self, "LICENSE", self.recipe_folder, licenses)
 
     def package_info(self):
         # libexificient.so -> link name "exificient"

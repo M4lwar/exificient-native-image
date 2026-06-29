@@ -181,3 +181,11 @@ The package is keyed on `os`+`arch` only (the C ABI is compiler-independent), so
 one binary works across compilers and build types. A complete worked example —
 using a `conanfile.py` consumer recipe — lives on the
 `demo/entity-exi-compression` branch under `examples/entity_demo`.
+
+## License
+
+This project is released under the [MIT License](LICENSE). It compiles
+[EXIficient](https://github.com/EXIficient/exificient) (also MIT, © Siemens AG)
+into the shared library; that notice is reproduced in
+[`THIRD_PARTY_NOTICES.txt`](THIRD_PARTY_NOTICES.txt) and bundled into the Conan
+package under `licenses/`, so it travels with any redistribution of the binary.
