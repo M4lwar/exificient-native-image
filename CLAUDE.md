@@ -50,7 +50,7 @@ LD_LIBRARY_PATH=./target ./test_exi [optional-xml-path]
 ### Two-Layer Design
 
 **`ExiProcessor`** (`src/main/java/.../ExiProcessor.java`) — pure Java, no GraalVM dependencies. It wraps EXIficient's SAX-based API:
-- Initialized with the XSD schema loaded from `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` (relative to CWD at runtime)
+- Initialized with the XSD schema loaded from `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` (relative to CWD at runtime), or from the path in the `EXIFICIENT_SCHEMA` env var if set
 - `encode(ByteArrayInputStream xml)` → EXI bytes via `EXIResult` + `XMLReader`
 - `decode(ByteArrayInputStream exi)` → XML bytes via `EXISource` + `TransformerFactory`
 
@@ -74,4 +74,4 @@ If you add new code paths that use reflection or load resources, re-run Phase 1 
 
 ### Schema Files
 
-`schemas/UCI_MessageDefinitions_v2_5_0.xsd` is the primary schema for schema-informed EXI encoding. `UCI_SecurityMarkings_v2_5_0.xsd` is imported by it. Both must be present at the path `./schemas/` relative to the working directory at runtime — this applies to both the JVM (for tests) and the native library.
+`schemas/UCI_MessageDefinitions_v2_5_0.xsd` is the primary schema for schema-informed EXI encoding. `UCI_SecurityMarkings_v2_5_0.xsd` is imported by it. Both must be present at the path `./schemas/` relative to the working directory at runtime — this applies to both the JVM (for tests) and the native library. To use a different schema, set the `EXIFICIENT_SCHEMA` environment variable to its path before `exi_init`; the default above is used when the variable is unset.

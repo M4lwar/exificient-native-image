@@ -1,5 +1,36 @@
-FROM ghcr.io/graalvm/native-image-community:21 AS build
-RUN microdnf install -y maven && microdnf clean all
+# Build libexificient.so with a pinned glibc floor.
+#
+# Base is Ubuntu 20.04 (glibc 2.31) instead of the GraalVM Oracle Linux image
+# (glibc ~2.34) so the resulting .so loads on older Linux hosts. The image is
+# multi-arch: the same Dockerfile builds a native x86_64 .so on an amd64 runner
+# and a native arm64 .so on an aarch64 runner -- no QEMU, no cross-compilation.
+FROM ubuntu:20.04 AS build
+
+ARG GRAALVM_VERSION=21.0.2
+ARG DEBIAN_FRONTEND=noninteractive
+
+# build-essential + zlib1g-dev are required by native-image to link the shared lib.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates build-essential zlib1g-dev maven \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GraalVM Community JDK 21 for the host architecture. native-image ships
+# inside the community JDK, so no `gu install` step is needed.
+RUN ARCH="$(dpkg --print-architecture)" \
+    && case "$ARCH" in \
+         amd64) GVM_ARCH=x64 ;; \
+         arm64) GVM_ARCH=aarch64 ;; \
+         *) echo "unsupported architecture: $ARCH" && exit 1 ;; \
+       esac \
+    && curl -fsSL -o /tmp/graalvm.tar.gz \
+        "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAALVM_VERSION}/graalvm-community-jdk-${GRAALVM_VERSION}_linux-${GVM_ARCH}_bin.tar.gz" \
+    && mkdir -p /opt/graalvm \
+    && tar -xzf /tmp/graalvm.tar.gz -C /opt/graalvm --strip-components=1 \
+    && rm /tmp/graalvm.tar.gz
+
+ENV JAVA_HOME=/opt/graalvm
+ENV PATH="/opt/graalvm/bin:${PATH}"
+
 WORKDIR /build
 
 COPY pom.xml .

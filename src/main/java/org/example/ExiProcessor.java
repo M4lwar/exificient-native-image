@@ -21,13 +21,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class ExiProcessor {
+    // Default schema path, relative to the working directory. Override by setting
+    // the EXIFICIENT_SCHEMA environment variable to a different .xsd path, which
+    // lets callers encode/decode against their own schema without rebuilding.
+    static final String DEFAULT_SCHEMA = "./schemas/UCI_MessageDefinitions_v2_5_0.xsd";
+
     EXIFactory exiFactory;
 
     public ExiProcessor() throws EXIException {
+        String schemaPath = System.getenv("EXIFICIENT_SCHEMA");
+        if (schemaPath == null || schemaPath.isEmpty()) {
+            schemaPath = DEFAULT_SCHEMA;
+        }
         exiFactory = DefaultEXIFactory.newInstance();
         Grammars grammars = GrammarFactory
                 .newInstance()
-                .createGrammars("./schemas/UCI_MessageDefinitions_v2_5_0.xsd");
+                .createGrammars(schemaPath);
         exiFactory.setGrammars(grammars);
     }
 

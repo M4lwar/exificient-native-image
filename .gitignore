@@ -37,3 +37,11 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Build / tooling output ###
+out/
+graphify-out/
+__pycache__/
+# Conan consumer-generated files
+test_package/build/
+CMakeUserPresets.json
