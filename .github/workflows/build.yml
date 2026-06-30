@@ -7,6 +7,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least-privilege default for the GITHUB_TOKEN; the release job opts up to write.
+permissions:
+  contents: read
+
 jobs:
   # Build the native shared library for each Linux architecture. Each leg runs on
   # a native runner (no QEMU) and produces a glibc-2.31-floored libexificient.so.
@@ -23,6 +27,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
 
       - name: Build libexificient.so
         run: docker build -f Dockerfile.build -o "out/${{ matrix.arch }}" .
@@ -54,6 +60,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -65,7 +73,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Conan
-        run: pip install "conan>=2.0"
+        run: pip install "conan>=2.0,<3"
 
       - name: Compute package version
         id: ver
