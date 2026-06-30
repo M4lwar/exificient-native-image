@@ -18,12 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # inside the community JDK, so no `gu install` step is needed.
 RUN ARCH="$(dpkg --print-architecture)" \
     && case "$ARCH" in \
-         amd64) GVM_ARCH=x64 ;; \
-         arm64) GVM_ARCH=aarch64 ;; \
+         amd64) GVM_ARCH=x64;     GVM_SHA=b048069aaa3a99b84f5b957b162cc181a32a4330cbc35402766363c5be76ae48 ;; \
+         arm64) GVM_ARCH=aarch64; GVM_SHA=a34be691ce68f0acf4655c7c6c63a9a49ed276a11859d7224fd94fc2f657cd7a ;; \
          *) echo "unsupported architecture: $ARCH" && exit 1 ;; \
        esac \
     && curl -fsSL -o /tmp/graalvm.tar.gz \
         "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAALVM_VERSION}/graalvm-community-jdk-${GRAALVM_VERSION}_linux-${GVM_ARCH}_bin.tar.gz" \
+    && echo "${GVM_SHA}  /tmp/graalvm.tar.gz" | sha256sum -c - \
     && mkdir -p /opt/graalvm \
     && tar -xzf /tmp/graalvm.tar.gz -C /opt/graalvm --strip-components=1 \
     && rm /tmp/graalvm.tar.gz
