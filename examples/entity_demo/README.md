@@ -37,10 +37,12 @@ conan cache restore conan-exificient-<arch>.tgz
 ## 3. Build the demo against it
 
 The build is driven by `conanfile.py` (a CMake consumer recipe) plus
-`CMakeLists.txt`. Conan generates the toolchain and runs CMake for you:
+`CMakeLists.txt`. Conan generates the toolchain and runs CMake for you. `exificient`
+is a prebuilt package, so `conan install` uses the binary restored in step 2 —
+don't pass `--build=missing` (it can't be built from source):
 
 ```sh
-conan install . --build=missing
+conan install .
 conan build .
 ```
 
