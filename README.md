@@ -16,7 +16,8 @@ A GraalVM Native Image shared library that exposes schema-informed XML↔EXI con
 Produces `target/libexificient.so` and the corresponding headers without requiring a local GraalVM installation:
 
 ```sh
-docker build -f Dockerfile.build -o target/ .
+docker build -t exi-native-build -f Dockerfile.build -o target/ .
+docker run --rm exi-native-build
 ```
 
 ### Local (requires GraalVM JDK 21)
