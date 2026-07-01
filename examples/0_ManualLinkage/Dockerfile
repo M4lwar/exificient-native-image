@@ -11,14 +11,14 @@ COPY schemas/ schemas/
 RUN mvn -B -Pnative test
 RUN mvn -B -Pnative package -DskipTests
 
-FROM ubuntu:22.04 AS test
+FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y --no-install-recommends g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /test
 
 COPY --from=build /build/target/*.so ./
 COPY --from=build /build/target/*.h ./
-COPY test.cpp ./
+COPY examples/0_ManualLinkage/test.cpp ./
 COPY src/test/resources/PositionReport.xml ./
 COPY schemas/ schemas/
 

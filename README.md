@@ -42,7 +42,7 @@ mvn test
 
 **End-to-end integration test (builds `.so`, compiles and runs `test.cpp`):**
 ```sh
-docker build -f Dockerfile.test -t exi-test .
+docker build -f /examples/0_ManualLinkage/Dockerfile -t exi-test .
 docker run --rm exi-test
 ```
 
