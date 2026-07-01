@@ -52,19 +52,22 @@ conan build .
 
 ## 4. Provide schemas and run
 
-The package ships **only the library and headers** — not the XSDs. At runtime the
-library loads its schema from `./schemas` relative to the working directory, which
-you supply (and can swap for your own XSD). Copy the schemas shipped in this repo
-(or your own) next to where you run:
+The package ships **only the library and headers** — not the XSDs. The demo passes
+the schema path to `exi_init` (default `./schemas/UCI_MessageDefinitions_v2_5_0.xsd`,
+overridable as the 2nd CLI arg), so that `.xsd` (and anything it imports) must exist
+on disk at that path. Copy the schemas shipped in this repo (or your own) next to
+where you run:
 
 ```sh
 cp -r ../../schemas ./schemas                       # or your own XSD
 source build/Release/generators/conanrun.sh         # puts the package's lib dir on LD_LIBRARY_PATH
 ./build/Release/entity_demo EntityReport.xml
+# or point at a different message + schema:
+# ./build/Release/entity_demo my.xml ./schemas/MySchema.xsd
 ```
 
-Pass a different XML path as the first argument to compress your own message
-(using whatever XSD you placed in `./schemas`).
+Pass a different XML path as the first argument (and optionally a schema path as the
+second) to compress your own message.
 
 ## Expected output
 
@@ -87,7 +90,8 @@ Pass a different XML path as the first argument to compress your own message
 ## Notes
 
 - The Conan package contains the library + headers only. **Schemas are not
-  packaged** — they are runtime data you provide at `./schemas`, by design, so you
-  can encode/decode against a different message schema without rebuilding.
+  packaged** — you provide the schema at runtime and pass its path to `exi_init`,
+  by design, so you can encode/decode against a different message schema without
+  rebuilding.
 - Every buffer returned by `exi_encode` / `exi_decode` must be released with
   `exi_free` (the demo does this).

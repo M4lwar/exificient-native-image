@@ -16,7 +16,7 @@ class EntityDemoConan(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps", "VirtualRunEnv"
 
     def requirements(self):
-        self.requires("exificient/0.0.0-ci")
+        self.requires("exificient/0.3.0-rc")  # needs the exi_init(schemaPath) interface
 
     def layout(self):
         cmake_layout(self)

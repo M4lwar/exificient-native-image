@@ -5,8 +5,9 @@
 // encodes it to EXI, and reports the size before/after. It then decodes the
 // EXI back to XML to show the round-trip works.
 //
-// Requires the UCI schemas to be reachable at ./schemas relative to the current
-// working directory (the library loads them from there at exi_init time).
+// The schema path is passed to exi_init (2nd CLI arg, defaulting to
+// ./schemas/UCI_MessageDefinitions_v2_5_0.xsd); that .xsd (and any it imports)
+// must exist on disk at that path.
 //
 // Build/run instructions are in README.md.
 
@@ -32,6 +33,7 @@ static std::vector<char> read_file(const char* path) {
 
 int main(int argc, char** argv) {
     const char* xml_path = argc > 1 ? argv[1] : "EntityReport.xml";
+    const char* schema_path = argc > 2 ? argv[2] : "./schemas/UCI_MessageDefinitions_v2_5_0.xsd";
 
     // --- Start the GraalVM runtime embedded in the library ---
     graal_isolate_t* isolate = nullptr;
@@ -41,10 +43,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Loads ./schemas/UCI_MessageDefinitions_v2_5_0.xsd relative to CWD.
-    if (exi_init(thread) != 0) {
-        fprintf(stderr, "Error: exi_init failed (is ./schemas present in the "
-                        "working directory?)\n");
+    // Initialize with the schema to load (NULL would fall back to the default).
+    if (exi_init(thread, schema_path) != 0) {
+        fprintf(stderr, "Error: exi_init failed (is '%s' present?)\n", schema_path);
         graal_tear_down_isolate(thread);
         return 1;
     }
