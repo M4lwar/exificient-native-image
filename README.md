@@ -62,8 +62,9 @@ graal_isolate_t* isolate = NULL;
 graal_isolatethread_t* thread = NULL;
 graal_create_isolate(NULL, &isolate, &thread);
 
-// 2. Initialize the EXI processor (loads the XSD schema)
-exi_init(thread);
+// 2. Initialize the EXI processor with the XSD schema to load.
+//    Pass NULL to use the default ./schemas/UCI_MessageDefinitions_v2_5_0.xsd.
+exi_init(thread, "schemas/UCI_MessageDefinitions_v2_5_0.xsd");
 
 // 3. Encode XML → EXI
 int exi_len = 0;
@@ -85,4 +86,4 @@ graal_tear_down_isolate(thread);
 
 ## Runtime Requirement
 
-The shared library loads the XSD schema from `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to the working directory at the time `exi_init` is called. The `schemas/` directory must be present wherever the library is deployed.
+The shared library loads the XSD schema passed to `exi_init(thread, schemaPath)` from the filesystem when called; a NULL/empty path falls back to `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to the working directory. Whichever schema is used (and any it imports) must be present on disk at that path wherever the library is deployed.

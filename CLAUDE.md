@@ -50,12 +50,12 @@ LD_LIBRARY_PATH=./target ./test_exi [optional-xml-path]
 ### Two-Layer Design
 
 **`ExiProcessor`** (`src/main/java/.../ExiProcessor.java`) — pure Java, no GraalVM dependencies. It wraps EXIficient's SAX-based API:
-- Initialized with the XSD schema loaded from `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` (relative to CWD at runtime)
+- Constructed with a schema path (`new ExiProcessor(schemaPath)`); a null/empty path falls back to the default `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` (relative to CWD at runtime)
 - `encode(ByteArrayInputStream xml)` → EXI bytes via `EXIResult` + `XMLReader`
 - `decode(ByteArrayInputStream exi)` → XML bytes via `EXISource` + `TransformerFactory`
 
 **`ExiLibrary`** (`src/main/java/.../ExiLibrary.java`) — the C ABI bridge. Uses GraalVM `@CEntryPoint` to expose:
-- `exi_init(thread)` → initializes the singleton `ExiProcessor`
+- `exi_init(thread, schemaPath)` → initializes the singleton `ExiProcessor` with the XSD at `schemaPath` (NULL → default schema)
 - `exi_encode(thread, input, inputLen, outputLen*)` → allocates and returns a `CCharPointer` buffer
 - `exi_decode(thread, input, inputLen, outputLen*)` → allocates and returns a `CCharPointer` buffer
 - `exi_free(thread, ptr)` → releases buffers allocated by encode/decode
@@ -74,4 +74,4 @@ If you add new code paths that use reflection or load resources, re-run Phase 1 
 
 ### Schema Files
 
-`schemas/UCI_MessageDefinitions_v2_5_0.xsd` is the primary schema for schema-informed EXI encoding. `UCI_SecurityMarkings_v2_5_0.xsd` is imported by it. Both must be present at the path `./schemas/` relative to the working directory at runtime — this applies to both the JVM (for tests) and the native library.
+`schemas/UCI_MessageDefinitions_v2_5_0.xsd` is the primary schema for schema-informed EXI encoding. `UCI_SecurityMarkings_v2_5_0.xsd` is imported by it. The schema path is passed to `exi_init` (or `new ExiProcessor(schemaPath)`); a null/empty path uses the default `./schemas/UCI_MessageDefinitions_v2_5_0.xsd`. Whichever schema is used (and anything it imports) must be present on disk at that path at runtime — this applies to both the JVM (for tests) and the native library.

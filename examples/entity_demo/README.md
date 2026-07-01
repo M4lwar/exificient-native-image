@@ -1,97 +1,123 @@
-# entity_demo
+# exi-demo
 
-A minimal C++ program that uses the prebuilt `libexificient` shared library to
-**schema-informed EXI compress** a representative UCI `Entity` message and report
-the size before and after. It then decodes the EXI back to XML to show the
-round-trip works. The library is consumed **via Conan**, using the package
-produced by the CI pipeline.
+A C++ example that consumes the prebuilt `libexificient` **Conan** package to
+schema-informed **EXI-compress** UCI XML messages. Point it at a single `.xml`
+file or a **directory** of captured messages (searched recursively) — it reports
+the compression ratio for each — and with `--iterations` it benchmarks the codec,
+timing the one-time `exi_init` separately from the per-message encode/decode.
 
-`EntityReport.xml` is a representative `EntityMT` message (root `<uci:Entity>`)
-shaped against `schemas/UCI_MessageDefinitions_v2_5_0.xsd`. It carries the required
-`MessageType` base fields (SecurityInformation, MessageHeader) and the required
-`EntityMDT` payload (EntityID, CreationTimestamp, Source, EntityStatus, Identity),
-plus a realistic set of optional fields to make it verbose: OperationalStatus,
-Mobility, a detailed Identity (Standard / Environment / Platform with confidences),
-full Kinematics (Position, Velocity, Orientation), Strength, and Endurance.
+`EntityReport.xml` is a representative, verbose UCI `Entity` message shaped against
+`schemas/UCI_MessageDefinitions_v2_5_0.xsd`.
 
-## 1. Get the Conan package from CI
+## 1. Get the Conan package
 
-The `build` workflow's `conan-package` job archives the package with
-`conan cache save` and uploads it as an artifact. Open a successful run and
-download the one for your architecture:
+Download the package for your architecture from the
+[`v0.3.0-rc` release](../../releases) (or a `build` workflow run):
 
-- `conan-exificient-linux-x86_64` -> `conan-exificient-x86_64.tgz`
-- `conan-exificient-linux-arm64`  -> `conan-exificient-arm64.tgz`
+- `conan-exificient-0.3.0-rc-linux-x86_64.tgz`
+- `conan-exificient-0.3.0-rc-linux-arm64.tgz`
+- `conan-exificient-0.3.0-rc-windows-x86_64.tgz`
 
-No GraalVM/JDK is needed to consume it — it's a prebuilt binary package.
+It's a prebuilt binary package — no GraalVM/JDK needed to consume it.
 
 ## 2. Restore it into your local Conan cache
 
-This is the "local Conan repo": the package goes straight into your cache, no
-remote server required.
-
 ```sh
-conan cache restore conan-exificient-<arch>.tgz
+conan cache restore conan-exificient-0.3.0-rc-linux-<arch>.tgz
 ```
 
-## 3. Build the demo against it
+## 3. Build the demo
 
-The build is driven by `conanfile.py` (a CMake consumer recipe) plus
-`CMakeLists.txt`. Conan generates the toolchain and runs CMake for you. `exificient`
-is a prebuilt package, so `conan install` uses the binary restored in step 2 —
-don't pass `--build=missing` (it can't be built from source):
+`conanfile.py` + `CMakeLists.txt` drive the build. `conan install` writes the
+generated CMake files (including the toolchain) under **`build/Release/generators/`**,
+so CMake must be pointed at the toolchain **explicitly**:
 
 ```sh
 conan install .
-conan build .
+cmake -S . -B build/Release \
+      -DCMAKE_TOOLCHAIN_FILE="$(pwd)/build/Release/generators/conan_toolchain.cmake" \
+      -DCMAKE_BUILD_TYPE=Release
+cmake --build build/Release
 ```
 
-`CMakeLists.txt` resolves the library with `find_package(exificient)` and links
-`exificient::exificient`; Conan generated the package config from the recipe's
-`cpp_info`. The binary is written to `build/Release/entity_demo`.
+The binary is written to **`build/Release/exi-demo`**.
 
-## 4. Provide schemas and run
+> Shortcut: `conan build .` runs those same CMake steps for you (Conan supplies the
+> toolchain automatically), if you'd rather not spell them out.
 
-The package ships **only the library and headers** — not the XSDs. The demo passes
-the schema path to `exi_init` (default `./schemas/UCI_MessageDefinitions_v2_5_0.xsd`,
-overridable as the 2nd CLI arg), so that `.xsd` (and anything it imports) must exist
-on disk at that path. Copy the schemas shipped in this repo (or your own) next to
-where you run:
+## 4. Provide the schema, set the library path, and run
+
+The package ships **library + headers only — no XSDs**. Provide the schema on disk,
+and put the package's shared library on the loader path via the generated `conanrun`
+script (this is why a bare `./exi-demo` otherwise fails to find `libexificient.so`):
 
 ```sh
-cp -r ../../schemas ./schemas                       # or your own XSD
-source build/Release/generators/conanrun.sh         # puts the package's lib dir on LD_LIBRARY_PATH
-./build/Release/entity_demo EntityReport.xml
-# or point at a different message + schema:
-# ./build/Release/entity_demo my.xml ./schemas/MySchema.xsd
+cp -r ../../schemas ./schemas                    # the schema exi_init will load
+source build/Release/generators/conanrun.sh      # adds the package's lib dir to LD_LIBRARY_PATH
+
+./build/Release/exi-demo -h                       # usage
+./build/Release/exi-demo                          # default: EntityReport.xml
+./build/Release/exi-demo samples/                 # survey a directory (recursive *.xml)
+./build/Release/exi-demo -n 1000 EntityReport.xml # benchmark encode/decode timing
 ```
 
-Pass a different XML path as the first argument (and optionally a schema path as the
-second) to compress your own message.
-
-## Expected output
+## CLI
 
 ```
-  UCI Entity message  : EntityReport.xml
-  ----------------------------------------------
-  XML size (original) :     3466 bytes
-  EXI size (encoded)  :      259 bytes
-  ----------------------------------------------
-  Compression ratio   :      7.5% of original
-  Space saved         :     92.5%
-  Shrink factor       :    13.38x smaller
-  Round-trip decode   :     2784 bytes XML (re-serialized, semantically equal)
+exi-demo [options] [path]
+
+  path                   An .xml file, or a directory searched recursively for
+                         *.xml files (default: EntityReport.xml)
+
+  -s, --schema <path>    XSD schema passed to exi_init
+                         (default: ./schemas/UCI_MessageDefinitions_v2_5_0.xsd)
+  -n, --iterations <N>   Encode+decode each message N times; report min/avg/max
+                         timing (default: 1)
+  -h, --help             Show this help and exit
 ```
 
-> The decoded XML is smaller than the original because EXIficient re-serializes
-> the document without the original comments and indentation — the content is
-> semantically identical, just reformatted.
+## Example: compression survey over a directory
+
+`samples/` holds one message of each of six UCI types (EntityMT, PositionReportMT,
+NavigationReportMT, TaskMT, TaskCommandMT, PositionReportDetailedMT):
+
+```
+  Schema   : ./schemas/UCI_MessageDefinitions_v2_5_0.xsd
+  exi_init : 8611.040 ms  (one-time: schema load + grammar build)
+
+  message                                        XML       EXI    saved
+  ---------------------------------------------------------------------
+  samples/entity.xml                            3466       259    92.5%
+  samples/navigation-report.xml                 1168        81    93.1%
+  samples/position-report-detailed.xml          2383       129    94.6%
+  samples/position-report.xml                   1798       139    92.3%
+  samples/task-command.xml                      1460       121    91.7%
+  samples/task.xml                              1403        81    94.2%
+  ---------------------------------------------------------------------
+  6 message(s)                                 11678       810    93.1%
+```
+
+Run it with `./build/Release/exi-demo samples/`.
+
+## Example: timing (`-n 1000`)
+
+```
+  message                                        XML       EXI    saved  enc avg ms dec avg ms
+  --------------------------------------------------------------------------------------------
+  EntityReport.xml                              3466       259    92.5%       0.218      0.102
+```
+
+`exi_init` takes ~9–10 s (building EXI grammars from the 8 MB UCI schema), while each
+`exi_encode`/`exi_decode` is well under a millisecond — the cost is the one-time init;
+per-message work is negligible. **Initialize once and reuse the processor for many
+messages.**
 
 ## Notes
 
-- The Conan package contains the library + headers only. **Schemas are not
-  packaged** — you provide the schema at runtime and pass its path to `exi_init`,
-  by design, so you can encode/decode against a different message schema without
-  rebuilding.
-- Every buffer returned by `exi_encode` / `exi_decode` must be released with
-  `exi_free` (the demo does this).
+- Schemas are **not** packaged; you supply the `.xsd` at runtime and its path is
+  passed to `exi_init`, so you can encode/decode against a different schema without
+  rebuilding. The schema file (and anything it imports) must exist on disk.
+- Decoded XML is smaller than the original because EXIficient re-serializes without
+  the original comments/indentation — semantically identical, just reformatted.
+- Every buffer returned by `exi_encode`/`exi_decode` must be released with `exi_free`
+  (the demo does this each iteration).
