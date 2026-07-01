@@ -33,4 +33,8 @@ class SmokeConan(ConanFile):
         if can_run(self):
             exe = os.path.join(self.cpp.build.bindir, "smoke")
             sample = os.path.join(self.source_folder, "sample.xml")
-            self.run(f'"{exe}" "{sample}"', env="conanrun")
+            # Schema lives at <repo>/schemas; pass it straight to exi_init.
+            schema = os.path.abspath(os.path.join(
+                self.source_folder, "..", "schemas",
+                "UCI_MessageDefinitions_v2_5_0.xsd"))
+            self.run(f'"{exe}" "{sample}" "{schema}"', env="conanrun")

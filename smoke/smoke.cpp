@@ -5,8 +5,8 @@
 // EXI round-trips back to XML. Exits non-zero on any failure so CI catches a
 // broken or fallback (schema-less) encode, not just a link/load problem.
 //
-// The schema is supplied via EXIFICIENT_SCHEMA (set by the CI step); the XML
-// path is argv[1].
+// argv[1] is the XML to encode; argv[2] is the .xsd schema path (passed straight
+// to exi_init).
 
 #include <cstdio>
 #include <cstdlib>
@@ -29,8 +29,8 @@ static std::vector<char> read_file(const char* path) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        fprintf(stderr, "usage: smoke <xml-file>\n");
+    if (argc < 3) {
+        fprintf(stderr, "usage: smoke <xml-file> <schema.xsd>\n");
         return 2;
     }
 
@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
         fprintf(stderr, "smoke: failed to create GraalVM isolate\n");
         return 1;
     }
-    if (exi_init(thread) != 0) {
-        fprintf(stderr, "smoke: exi_init failed (schema not found?)\n");
+    if (exi_init(thread, argv[2]) != 0) {
+        fprintf(stderr, "smoke: exi_init failed (schema '%s' not found?)\n", argv[2]);
         return 1;
     }
 

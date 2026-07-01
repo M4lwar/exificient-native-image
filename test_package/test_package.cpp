@@ -17,7 +17,7 @@ int main() {
 
     // A non-zero return is acceptable here (schemas may be absent); we only
     // require that the symbol resolves and the call returns.
-    int rc = exi_init(thread);
+    int rc = exi_init(thread, nullptr);   // NULL -> default schema path
     printf("exificient: linked OK, isolate created, exi_init returned %d\n", rc);
 
     graal_tear_down_isolate(thread);
