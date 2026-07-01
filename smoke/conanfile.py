@@ -32,5 +32,5 @@ class SmokeConan(ConanFile):
     def test(self):
         if can_run(self):
             exe = os.path.join(self.cpp.build.bindir, "smoke")
-            sample = os.path.join(self.source_folder, "sample.xml")
+            sample = os.path.join(self.source_folder, "PositionReport.xml")
             self.run(f'"{exe}" "{sample}"', env="conanrun")
