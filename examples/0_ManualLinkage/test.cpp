@@ -21,6 +21,7 @@ static std::vector<char> read_file(const char* path) {
 
 int main(int argc, char** argv) {
     const char* xml_path = argc > 1 ? argv[1] : "src/test/resources/PositionReport.xml";
+    const char* schema_path = argc > 2 ? argv[2] : "schemas/UCI_MessageDefinitions_v2_5_0.xsd";
 
     // --- Start GraalVM runtime ---
     graal_isolate_t* isolate = nullptr;
@@ -30,7 +31,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (exi_init(thread) != 0) {
+    // exi_init takes a non-const char* (GraalVM's CCharPointer); it doesn't
+    // modify the string, so const_cast is safe.
+    if (exi_init(thread, const_cast<char*>(schema_path)) != 0) {
         fprintf(stderr, "Error: exi_init failed\n");
         graal_tear_down_isolate(thread);
         return 1;

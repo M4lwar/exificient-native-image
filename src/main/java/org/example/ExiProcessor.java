@@ -21,15 +21,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class ExiProcessor {
-    // Default schema path, relative to the working directory. Override by setting
-    // the EXIFICIENT_SCHEMA environment variable to a different .xsd path, which
-    // lets callers encode/decode against their own schema without rebuilding.
+    // Default schema path, relative to the working directory, used when the
+    // caller does not supply one.
     static final String DEFAULT_SCHEMA = "./schemas/UCI_MessageDefinitions_v2_5_0.xsd";
 
     EXIFactory exiFactory;
 
     public ExiProcessor() throws EXIException {
-        String schemaPath = System.getenv("EXIFICIENT_SCHEMA");
+        this(DEFAULT_SCHEMA);
+    }
+
+    // schemaPath: the .xsd to build the EXI grammar from. A null or empty value
+    // falls back to DEFAULT_SCHEMA. Callers supply this via the exi_init argument.
+    public ExiProcessor(String schemaPath) throws EXIException {
         if (schemaPath == null || schemaPath.isEmpty()) {
             schemaPath = DEFAULT_SCHEMA;
         }

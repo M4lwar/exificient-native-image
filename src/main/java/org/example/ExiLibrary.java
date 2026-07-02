@@ -13,10 +13,13 @@ import java.io.ByteArrayInputStream;
 public class ExiLibrary {
     private static ExiProcessor processor;
 
+    // schemaPath: NUL-terminated path to the XSD to load. If NULL/empty, the
+    // default schema (./schemas/UCI_MessageDefinitions_v2_5_0.xsd) is used.
     @CEntryPoint(name = "exi_init")
-    public static int init(IsolateThread thread) {
+    public static int init(IsolateThread thread, CCharPointer schemaPath) {
         try {
-            processor = new ExiProcessor();
+            String path = schemaPath.isNull() ? null : CTypeConversion.toJavaString(schemaPath);
+            processor = new ExiProcessor(path);
             return 0;
         } catch (Exception e) {
             return -1;

@@ -63,8 +63,9 @@ graal_isolate_t* isolate = NULL;
 graal_isolatethread_t* thread = NULL;
 graal_create_isolate(NULL, &isolate, &thread);
 
-// 2. Initialize the EXI processor (loads the XSD schema)
-exi_init(thread);
+// 2. Initialize the EXI processor with the XSD schema to load.
+//    Pass NULL to use the default ./schemas/UCI_MessageDefinitions_v2_5_0.xsd.
+exi_init(thread, "schemas/UCI_MessageDefinitions_v2_5_0.xsd");
 
 // 3. Encode XML → EXI
 int exi_len = 0;
@@ -86,25 +87,22 @@ graal_tear_down_isolate(thread);
 
 ## Runtime Requirement: schemas
 
-`exi_init` loads an XSD schema from the filesystem at the time it is called. By
-default it reads `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to the
-**current working directory**, so a `schemas/` directory must be present wherever
-the library runs.
+`exi_init(thread, schemaPath)` loads the XSD at `schemaPath` from the filesystem
+when called. Pass the path to the schema you want; passing `NULL` (or an empty
+string) falls back to `./schemas/UCI_MessageDefinitions_v2_5_0.xsd` relative to
+the **current working directory**. Whichever schema you use (and any it imports)
+must be present on disk at that path at runtime.
 
 ### Using a custom schema
 
-Set the `EXIFICIENT_SCHEMA` environment variable (before `exi_init`) to the path
-of your own `.xsd` to encode/decode against a different schema — no rebuild
-required:
+Point `exi_init` at your own `.xsd` — no rebuild required:
 
-```sh
-export EXIFICIENT_SCHEMA=/etc/myapp/MySchema.xsd
-./your_app
+```c
+exi_init(thread, "/etc/myapp/MySchema.xsd");
 ```
 
-If the variable is unset or empty, the default path above is used. The schema
-informs the EXI grammar on both ends, so the encoder and decoder must use the
-same schema.
+The schema informs the EXI grammar on both ends, so the encoder and decoder must
+use the same schema.
 
 The schema is parsed from disk at runtime (it is **not** compiled into the
 `.so`), so pointing at a different schema works without rebuilding. XSD parsing
@@ -179,8 +177,8 @@ The generated `VirtualRunEnv` script handles the loader path:
 
 ```sh
 source build/conanrun.sh                 # puts the package's lib dir on LD_LIBRARY_PATH
-cp -r /path/to/your/schemas ./schemas    # or: export EXIFICIENT_SCHEMA=/path/to/your.xsd
-./build/your_app
+cp -r /path/to/your/schemas ./schemas    # the .xsd you pass to exi_init must exist on disk
+./build/your_app                         # your app calls exi_init(thread, "schemas/...xsd")
 ```
 
 The package is keyed on `os`+`arch` only (the C ABI is compiler-independent), so

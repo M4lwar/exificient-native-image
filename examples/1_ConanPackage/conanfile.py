@@ -10,7 +10,7 @@ class SmokeConan(ConanFile):
     runs it on a known-good XML, asserting that compression actually works.
 
     Run with: conan test examples/1_ConanPackage exificient/<version>
-    (set EXIFICIENT_SCHEMA so exi_init can find a schema).
+    (the schema path is passed to exi_init; the .xsd must exist on disk).
     """
 
     settings = "os", "arch", "compiler", "build_type"
@@ -33,4 +33,8 @@ class SmokeConan(ConanFile):
         if can_run(self):
             exe = os.path.join(self.cpp.build.bindir, "smoke")
             sample = os.path.join(self.source_folder, "PositionReport.xml")
-            self.run(f'"{exe}" "{sample}"', env="conanrun")
+            # Schema lives at <repo>/schemas; pass its path straight to exi_init.
+            schema = os.path.abspath(os.path.join(
+                self.source_folder, "..", "..", "schemas",
+                "UCI_MessageDefinitions_v2_5_0.xsd"))
+            self.run(f'"{exe}" "{sample}" "{schema}"', env="conanrun")

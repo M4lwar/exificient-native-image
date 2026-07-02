@@ -89,8 +89,6 @@ jobs:
           conan export-pkg . --version "${{ steps.ver.outputs.version }}"
 
       - name: Smoke test (functional — asserts compression works)
-        env:
-          EXIFICIENT_SCHEMA: ${{ github.workspace }}/schemas/UCI_MessageDefinitions_v2_5_0.xsd
         run: conan test examples/1_ConanPackage "exificient/${{ steps.ver.outputs.version }}"
 
       - name: Save the Conan package as a portable artifact
@@ -185,8 +183,6 @@ jobs:
           conan export-pkg . --version "${{ steps.ver.outputs.version }}"
 
       - name: Smoke test (functional — asserts compression works)
-        env:
-          EXIFICIENT_SCHEMA: ${{ github.workspace }}/schemas/UCI_MessageDefinitions_v2_5_0.xsd
         run: conan test examples/1_ConanPackage "exificient/${{ steps.ver.outputs.version }}"
 
       - name: Save the Conan package as a portable artifact
